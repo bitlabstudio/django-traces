@@ -1,7 +1,7 @@
 django-traces
 =============
 
-A reusable app to track view hits
+A reusable app to track view hits.
 
 Installation
 ------------
@@ -17,8 +17,6 @@ To get the latest commit from GitHub
 .. code-block:: bash
 
     $ pip install -e git+git://github.com/bitmazk/django-traces.git#egg=traces
-
-TODO: Describe further installation steps (edit / remove the examples below):
 
 Add ``traces`` to your ``INSTALLED_APPS``
 
@@ -48,18 +46,34 @@ Don't forget to migrate your database
 Usage
 -----
 
-TODO
+If you want to track a certain view just add our middleware::
+
+    MIDDLEWARE_CLASSES = (
+        ...
+        'traces.middleware.TracesMiddleware',
+    )
+
+...and add the view name/url name to the setting TRACED_VIEWS. If you have
+added a view like this::
+
+    url(r'^$', TemplateView.as_view(template_name='test.html'), name='test_view'),
+
+...your setting should look like::
+
+    TRACED_VIEWS = ['test_view', ]
+
+The app will now track all visits to this view.
 
 
 Settings
 --------
 
-FIRST SETTING
-+++++++++++++
+TRACED_VIEWS
+++++++++++++
 
-Default: None
+Default: []
 
-TODO
+List all view names to track.
 
 
 Contribute
