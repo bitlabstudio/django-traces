@@ -12,14 +12,14 @@ register = Library()
 
 
 @register.assignment_tag(takes_context=True)
-def get_view_hits(context, view_name=''):
+def get_view_hits(context, view_name='', view_object=None):
     """Simply returns the amount of hits for this view."""
     view_name = view_name or resolve(context['request'].path_info).url_name
     if view_name not in getattr(settings, 'TRACED_VIEWS', []):
         # If it's not a traced view return None
         return None
     filter_kwargs = {'view_name': view_name}
-    view_object = context.get('object')
+    view_object = view_object or context.get('object')
     if view_object:
         filter_kwargs['content_type'] = \
             ContentType.objects.get_for_model(view_object)
