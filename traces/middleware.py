@@ -31,12 +31,12 @@ class TracesMiddleware(object):
     If the trace should be tracked, a new hit is counted.
 
     """
-    def process_request(self, request):
+    def process_response(self, request, response):
         view_name = resolve(request.path_info).url_name
         if view_name in getattr(settings, 'TRACED_VIEWS', []):
             ip = get_ip(request)
             if not ip:
-                return False
+                return response
             user_agent = request.META.get('HTTP_USER_AGENT', '')[:255]
             user = request.user
 
@@ -44,7 +44,7 @@ class TracesMiddleware(object):
             if (BlacklistIP.objects.filter(ip__exact=ip)
                     or BlacklistUserAgent.objects.filter(
                         user_agent__exact=user_agent)):
-                return False
+                return response
 
             # Create session key, if unexistant
             if not request.session.session_key:
@@ -61,11 +61,11 @@ class TracesMiddleware(object):
                         user_agent=user_agent,
                         session_key=request.session.session_key,
                     )
-                    return True
+                    return response
                 trace = Trace.objects.get(user=user, view_name=view_name)
                 trace.hits += 1
                 trace.save()
-                return True
+                return response
             if not Trace.objects.filter(
                     session_key=request.session.session_key,
                     view_name=view_name):
@@ -75,11 +75,11 @@ class TracesMiddleware(object):
                     user_agent=user_agent,
                     session_key=request.session.session_key,
                 )
-                return True
+                return response
             trace = Trace.objects.get(
                 session_key=request.session.session_key,
                 view_name=view_name)
             trace.hits += 1
             trace.save()
-            return True
-        return None
+            return response
+        return response

@@ -79,5 +79,6 @@ MIDDLEWARE_CLASSES = (
 )
 
 TRACED_VIEWS = [
-    'test',
+    'test_view',
+    'test_dummy_view',
 ]
