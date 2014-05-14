@@ -1,3 +1,5 @@
 === (ongoing) ===
 
-- Add basic app.
+=== 0.1 ===
+
+- Added basic app.
