@@ -65,6 +65,25 @@ added a view like this::
 The app will now track all visits to this view.
 
 
+Template tags
+-------------
+
+get_view_hits
++++++++++++++
+
+To get the current amount of requests for this view::
+
+    {% load traces_tags %}
+    {% get_view_hits as hits %}
+    Hits: {{ hits }}
+
+You can also provide the view name to get any view hits::
+
+    {% load traces_tags %}
+    {% get_view_hits 'view_name' as hits %}
+    Hits: {{ hits }}
+
+
 Settings
 --------
 
