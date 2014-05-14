@@ -1,5 +1,6 @@
 """Custom middlewares for the ``traces`` app."""
 from django.conf import settings
+from django.core.urlresolvers import resolve
 from django.core.validators import ipv4_re
 
 from .models import BlacklistIP, BlacklistUserAgent, Trace
@@ -31,7 +32,7 @@ class TracesMiddleware(object):
 
     """
     def process_request(self, request):
-        view_name = request.resolver_match.url_name
+        view_name = resolve(request.path_info).url_name
         if view_name in getattr(settings, 'TRACED_VIEWS', []):
             ip = get_ip(request)
             if not ip:
@@ -47,8 +48,8 @@ class TracesMiddleware(object):
 
             # Create session key, if unexistant
             if not request.session.session_key:
-                request.session.save()
                 request.session.modified = True
+                request.session.save()
 
             # Check if trace exists
             if user.is_authenticated():

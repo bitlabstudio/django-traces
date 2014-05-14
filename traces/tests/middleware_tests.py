@@ -17,44 +17,45 @@ class TraceMiddlewareTestCase(TestCase):
         self.middleware = TracesMiddleware()
         self.request = Mock()
         self.request.user = AnonymousUser()
+        self.request.path_info = '/'
         self.request.session.session_key = 'foobar'
         self.request.resolver_match.url_name = 'test_view'
         self.request.META = {'HTTP_USER_AGENT': ''}
 
     def test_untraced_view(self):
-        self.assertIsNone(self.middleware.process_request(self.request))
+        with self.settings(TRACED_VIEWS=[]):
+            self.assertIsNone(self.middleware.process_request(self.request))
 
     def test_traced_view(self):
-        with self.settings(TRACED_VIEWS=['test_view']):
-            # Anonymous user
-            self.assertTrue(self.middleware.process_request(self.request))
-            self.assertEqual(Trace.objects.count(), 1, msg=(
-                'A new trace should have been created.'))
+        # Anonymous user
+        self.assertTrue(self.middleware.process_request(self.request))
+        self.assertEqual(Trace.objects.count(), 1, msg=(
+            'A new trace should have been created.'))
 
-            self.assertTrue(self.middleware.process_request(self.request))
-            self.assertEqual(Trace.objects.count(), 1, msg=(
-                'No new trace should have been created.'))
-            self.assertEqual(Trace.objects.all()[0].hits, 2, msg=(
-                'Hits should have been increased.'))
+        self.assertTrue(self.middleware.process_request(self.request))
+        self.assertEqual(Trace.objects.count(), 1, msg=(
+            'No new trace should have been created.'))
+        self.assertEqual(Trace.objects.all()[0].hits, 2, msg=(
+            'Hits should have been increased.'))
 
-            BlacklistIPFactory(ip=Trace.objects.get().ip)
-            self.assertFalse(self.middleware.process_request(self.request))
+        BlacklistIPFactory(ip=Trace.objects.get().ip)
+        self.assertFalse(self.middleware.process_request(self.request))
 
-            self.request.session.session_key = ''
-            self.request.META['HTTP_X_FORWARDED_FOR'] = '1.1.1.1'
-            self.assertTrue(self.middleware.process_request(self.request))
+        self.request.session.session_key = ''
+        self.request.META['HTTP_X_FORWARDED_FOR'] = '1.1.1.1'
+        self.assertTrue(self.middleware.process_request(self.request))
 
-            # Logged in user
-            self.request.user = UserFactory()
-            self.assertTrue(self.middleware.process_request(self.request))
-            self.assertEqual(Trace.objects.count(), 3, msg=(
-                'A new trace should have been created.'))
+        # Logged in user
+        self.request.user = UserFactory()
+        self.assertTrue(self.middleware.process_request(self.request))
+        self.assertEqual(Trace.objects.count(), 3, msg=(
+            'A new trace should have been created.'))
 
-            self.assertTrue(self.middleware.process_request(self.request))
-            self.assertEqual(Trace.objects.count(), 3, msg=(
-                'No new trace should have been created.'))
-            self.assertEqual(Trace.objects.all()[0].hits, 2, msg=(
-                'Hits should have been increased.'))
+        self.assertTrue(self.middleware.process_request(self.request))
+        self.assertEqual(Trace.objects.count(), 3, msg=(
+            'No new trace should have been created.'))
+        self.assertEqual(Trace.objects.all()[0].hits, 2, msg=(
+            'Hits should have been increased.'))
 
-            self.request.META['HTTP_X_FORWARDED_FOR'] = '1.1.1.1.1.1.1'
-            self.assertFalse(self.middleware.process_request(self.request))
+        self.request.META['HTTP_X_FORWARDED_FOR'] = '1.1.1.1.1.1.1'
+        self.assertFalse(self.middleware.process_request(self.request))
