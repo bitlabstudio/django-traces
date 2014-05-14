@@ -1,5 +1,6 @@
 """Template tags for the ``traces`` app."""
 from django.conf import settings
+from django.contrib.contenttypes.models import ContentType
 from django.core.urlresolvers import resolve
 from django.db.models import Sum
 from django.template import Library
@@ -17,7 +18,13 @@ def get_view_hits(context, view_name=''):
     if view_name not in getattr(settings, 'TRACED_VIEWS', []):
         # If it's not a traced view return None
         return None
-    traces = Trace.objects.filter(view_name=view_name)
+    filter_kwargs = {'view_name': view_name}
+    view_object = context.get('object')
+    if view_object:
+        filter_kwargs['content_type'] = \
+            ContentType.objects.get_for_model(view_object)
+        filter_kwargs['object_id'] = view_object.pk
+    traces = Trace.objects.filter(**filter_kwargs)
     if traces:
         # If there are saved traces aggregate their hits
         # Since the hit is updated with the view response (and not yet saved)

@@ -1,5 +1,6 @@
 """Custom middlewares for the ``traces`` app."""
 from django.conf import settings
+from django.contrib.contenttypes.models import ContentType
 from django.core.urlresolvers import resolve
 from django.core.validators import ipv4_re
 
@@ -39,6 +40,10 @@ class TracesMiddleware(object):
                 return response
             user_agent = request.META.get('HTTP_USER_AGENT', '')[:255]
             user = request.user
+            if hasattr(response, 'context_data') and response.context_data:
+                view_object = response.context_data.get('object')
+            else:
+                view_object = None
 
             # Check IP and user agent against blacklist
             if (BlacklistIP.objects.filter(ip__exact=ip)
@@ -51,34 +56,37 @@ class TracesMiddleware(object):
                 request.session.modified = True
                 request.session.save()
 
+            trace_kwargs = {
+                'view_name': view_name,
+                'ip': ip,
+                'user_agent': user_agent,
+                'session_key': request.session.session_key,
+            }
+            filter_kwargs = {'view_name': view_name}
+            if view_object:
+                trace_kwargs['view_object'] = view_object
+                filter_kwargs['content_type'] = \
+                    ContentType.objects.get_for_model(view_object)
+                filter_kwargs['object_id'] = view_object.pk
+
             # Check if trace exists
             if user.is_authenticated():
-                if not Trace.objects.filter(user=user, view_name=view_name):
-                    Trace.objects.create(
-                        user=user,
-                        view_name=view_name,
-                        ip=ip,
-                        user_agent=user_agent,
-                        session_key=request.session.session_key,
-                    )
+                filter_kwargs['user'] = user
+                try:
+                    trace = Trace.objects.get(**filter_kwargs)
+                except Trace.DoesNotExist:
+                    trace_kwargs['user'] = user
+                    Trace.objects.create(**trace_kwargs)
                     return response
-                trace = Trace.objects.get(user=user, view_name=view_name)
                 trace.hits += 1
                 trace.save()
                 return response
-            if not Trace.objects.filter(
-                    session_key=request.session.session_key,
-                    view_name=view_name):
-                Trace.objects.create(
-                    view_name=view_name,
-                    ip=ip,
-                    user_agent=user_agent,
-                    session_key=request.session.session_key,
-                )
+            filter_kwargs['session_key'] = request.session.session_key
+            try:
+                trace = Trace.objects.get(**filter_kwargs)
+            except Trace.DoesNotExist:
+                Trace.objects.create(**trace_kwargs)
                 return response
-            trace = Trace.objects.get(
-                session_key=request.session.session_key,
-                view_name=view_name)
             trace.hits += 1
             trace.save()
             return response

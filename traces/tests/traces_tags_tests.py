@@ -1,6 +1,8 @@
 """Test for the template tags of the ``traces`` app."""
 from django.test import TestCase
 
+from django_libs.tests.factories import UserFactory
+
 from ..templatetags import traces_tags
 from . import factories
 
@@ -21,3 +23,9 @@ class GetViewHitsTestCase(TestCase):
 
         with self.settings(TRACED_VIEWS=[]):
             self.assertIsNone(traces_tags.get_view_hits({}, 'test_view'))
+
+        with self.settings(TRACED_VIEWS=['view_with_an_object']):
+            context = {'object': UserFactory()}
+            self.assertEqual(
+                traces_tags.get_view_hits(context, 'view_with_an_object'), 1,
+                msg=('Should return five hits.'))

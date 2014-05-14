@@ -22,7 +22,7 @@ class TraceMiddlewareTestCase(TestCase):
         self.request.resolver_match.url_name = 'test_view'
         self.request.META = {'HTTP_USER_AGENT': ''}
         self.response = Mock()
-        self.request.context_data = {'object': ''}
+        self.response.context_data = None
 
     def test_untraced_view(self):
         with self.settings(TRACED_VIEWS=[]):
@@ -46,6 +46,7 @@ class TraceMiddlewareTestCase(TestCase):
             self.assertEqual(Trace.objects.all()[0].hits, 2, msg=(
                 'Hits should have been increased.'))
 
+            # Blacklisted
             BlacklistIPFactory(ip=Trace.objects.get().ip)
             self.assertTrue(
                 self.middleware.process_response(self.request, self.response))
@@ -71,8 +72,17 @@ class TraceMiddlewareTestCase(TestCase):
             self.assertEqual(Trace.objects.all()[0].hits, 2, msg=(
                 'Hits should have been increased.'))
 
+            # View object
+            self.response.context_data = {'object': UserFactory()}
+            self.request.resolver_match.url_name = 'test_model_view'
+            self.assertTrue(
+                self.middleware.process_response(self.request, self.response))
+            self.assertEqual(Trace.objects.count(), 4, msg=(
+                'A new trace should have been created.'))
+
+            # Invalid IP
             self.request.META['HTTP_X_FORWARDED_FOR'] = '1.1.1.1.1.1.1'
             self.assertTrue(
                 self.middleware.process_response(self.request, self.response))
-            self.assertEqual(Trace.objects.count(), 3, msg=(
+            self.assertEqual(Trace.objects.count(), 4, msg=(
                 'No new trace should have been created.'))

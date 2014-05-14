@@ -1,6 +1,8 @@
 """Models for the ``traces`` app."""
 from django.db import models
 from django.conf import settings
+from django.contrib.contenttypes import generic
+from django.contrib.contenttypes.models import ContentType
 
 
 class Trace(models.Model):
@@ -13,6 +15,7 @@ class Trace(models.Model):
     :user_agent: User agent of the request.
     :session_key: Session key in the request.
     :user: User who called the website, if not anonymous.
+    :view_object: Object of the called view.
     :hits: Hit count of the user/view combination.
 
     """
@@ -46,6 +49,11 @@ class Trace(models.Model):
         null=True, blank=True,
         verbose_name=('User'),
     )
+
+    # GFK 'view_object'
+    content_type = models.ForeignKey(ContentType, blank=True, null=True)
+    object_id = models.PositiveIntegerField(blank=True, null=True)
+    view_object = generic.GenericForeignKey('content_type', 'object_id')
 
     hits = models.PositiveIntegerField(
         default=1,
