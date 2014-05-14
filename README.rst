@@ -83,6 +83,9 @@ You can also provide the view name to get any view hits::
     {% get_view_hits 'view_name' as hits %}
     Hits: {{ hits }}
 
+    {% get_view_hits 'model_view_name' object as model_view_hits %}
+    Hits: {{ model_view_hits }}
+
 
 Settings
 --------

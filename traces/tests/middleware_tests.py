@@ -86,3 +86,10 @@ class TraceMiddlewareTestCase(TestCase):
                 self.middleware.process_response(self.request, self.response))
             self.assertEqual(Trace.objects.count(), 4, msg=(
                 'No new trace should have been created.'))
+
+            # Invalid URL or missing view name
+            self.request.path_info = '/inexistant-view/'
+            self.assertTrue(
+                self.middleware.process_response(self.request, self.response))
+            self.assertEqual(Trace.objects.count(), 4, msg=(
+                'No new trace should have been created.'))

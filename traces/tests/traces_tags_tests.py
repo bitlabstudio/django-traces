@@ -2,6 +2,7 @@
 from django.test import TestCase
 
 from django_libs.tests.factories import UserFactory
+from mock import Mock
 
 from ..templatetags import traces_tags
 from . import factories
@@ -23,6 +24,11 @@ class GetViewHitsTestCase(TestCase):
 
         with self.settings(TRACED_VIEWS=[]):
             self.assertIsNone(traces_tags.get_view_hits({}, 'test_view'))
+
+            request = Mock()
+            request.path_info = '/inexistant-view/'
+            context = {'request': request}
+            self.assertIsNone(traces_tags.get_view_hits(context))
 
         with self.settings(TRACED_VIEWS=['view_with_an_object']):
             context = {'object': UserFactory()}

@@ -1,7 +1,7 @@
 """Custom middlewares for the ``traces`` app."""
 from django.conf import settings
 from django.contrib.contenttypes.models import ContentType
-from django.core.urlresolvers import resolve
+from django.core.urlresolvers import resolve, Resolver404
 from django.core.validators import ipv4_re
 
 from .models import BlacklistIP, BlacklistUserAgent, Trace
@@ -33,7 +33,10 @@ class TracesMiddleware(object):
 
     """
     def process_response(self, request, response):
-        view_name = resolve(request.path_info).url_name
+        try:
+            view_name = resolve(request.path_info).url_name
+        except Resolver404:
+            return response
         if view_name in getattr(settings, 'TRACED_VIEWS', []):
             ip = get_ip(request)
             if not ip:
