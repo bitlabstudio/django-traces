@@ -32,7 +32,7 @@ def get_view_hits(context, view_name='', view_object=None):
         # If there are saved traces aggregate their hits
         # Since the hit is updated with the view response (and not yet saved)
         # we can already add a 1
-        return traces.aggregate(hits=Sum('hits'))['hits'] + 1
+        return traces.aggregate(hits=Sum('hits'))['hits']
     # If it's a traced view we know that a new trace will be created with
     # the response, so we return one hit
-    return 1
+    return 0

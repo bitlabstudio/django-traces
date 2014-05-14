@@ -13,13 +13,13 @@ class GetViewHitsTestCase(TestCase):
     longMessage = True
 
     def test_tag(self):
-        self.assertEqual(traces_tags.get_view_hits({}, 'test_view'), 1, msg=(
+        self.assertEqual(traces_tags.get_view_hits({}, 'test_view'), 0, msg=(
             'Should return one hit.'))
 
         with self.settings(TRACED_VIEWS=['view_with_hits']):
             factories.TraceFactory(view_name='view_with_hits', hits='4')
             self.assertEqual(
-                traces_tags.get_view_hits({}, 'view_with_hits'), 5,
+                traces_tags.get_view_hits({}, 'view_with_hits'), 4,
                 msg=('Should return five hits.'))
 
         with self.settings(TRACED_VIEWS=[]):
@@ -33,5 +33,5 @@ class GetViewHitsTestCase(TestCase):
         with self.settings(TRACED_VIEWS=['view_with_an_object']):
             context = {'object': UserFactory()}
             self.assertEqual(
-                traces_tags.get_view_hits(context, 'view_with_an_object'), 1,
+                traces_tags.get_view_hits(context, 'view_with_an_object'), 0,
                 msg=('Should return five hits.'))
