@@ -75,16 +75,10 @@ class TracesMiddleware(object):
             # Check if trace exists
             if user.is_authenticated():
                 filter_kwargs['user'] = user
-                try:
-                    trace = Trace.objects.get(**filter_kwargs)
-                except Trace.DoesNotExist:
-                    trace_kwargs['user'] = user
-                    Trace.objects.create(**trace_kwargs)
-                    return response
-                trace.hits += 1
-                trace.save()
-                return response
-            filter_kwargs['session_key'] = request.session.session_key
+                trace_kwargs['user'] = user
+            else:
+                filter_kwargs['session_key'] = request.session.session_key
+                trace_kwargs['session_key'] = request.session.session_key
             try:
                 trace = Trace.objects.get(**filter_kwargs)
             except Trace.DoesNotExist:
