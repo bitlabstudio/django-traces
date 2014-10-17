@@ -93,3 +93,10 @@ class TraceMiddlewareTestCase(TestCase):
                 self.middleware.process_response(self.request, self.response))
             self.assertEqual(Trace.objects.count(), 4, msg=(
                 'No new trace should have been created.'))
+
+            # 404
+            self.response.status_code = 404
+            self.assertTrue(
+                self.middleware.process_response(self.request, self.response))
+            self.assertEqual(Trace.objects.count(), 4, msg=(
+                'No new trace should have been created.'))
