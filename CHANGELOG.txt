@@ -1,5 +1,9 @@
 === (ongoing) ===
 
+=== 0.4 ===
+
+- Catch 500 in middleware.
+
 === 0.3 ===
 
 - Catch 404 in middleware.

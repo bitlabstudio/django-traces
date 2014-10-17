@@ -33,7 +33,7 @@ class TracesMiddleware(object):
 
     """
     def process_response(self, request, response):
-        if response.status_code == 404:
+        if response.status_code in [404, 500]:
             return response
         try:
             view_name = resolve(request.path_info).url_name
